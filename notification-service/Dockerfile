@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jre-jammy
+FROM amazoncorretto:17-alpine
 WORKDIR /app
 COPY target/notification-service-*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
