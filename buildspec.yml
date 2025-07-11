@@ -1,0 +1,36 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto17
+    commands:
+      - echo "Installing Maven and Docker"
+      - mvn -version
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR"
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 406234571876.dkr.ecr.us-east-1.amazonaws.com
+      - REPO_ORDER=406234571876.dkr.ecr.us-east-1.amazonaws.com/order-service
+      - REPO_INV=406234571876.dkr.ecr.us-east-1.amazonaws.com/inventory-service
+      - REPO_NOTIF=406234571876.dkr.ecr.us-east-1.amazonaws.com/notification-service
+  build:
+    commands:
+      - echo "Building JARs with Maven"
+      - mvn clean install -DskipTests
+      - echo "Building Docker images"
+      - docker build -t $REPO_ORDER ./order-service
+      - docker build -t $REPO_INV ./inventory-service
+      - docker build -t $REPO_NOTIF ./notification-service
+  post_build:
+    commands:
+      - echo "Pushing Docker images to ECR"
+      - docker push $REPO_ORDER
+      - docker push $REPO_INV
+      - docker push $REPO_NOTIF
+      - echo "Creating imagedefinitions.json for ECS"
+      - printf '[{"name":"order-service","imageUri":"%s"},{"name":"inventory-service","imageUri":"%s"},{"name":"notification-service","imageUri":"%s"}]' $REPO_ORDER $REPO_INV $REPO_NOTIF > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json

@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    healthcheck:
+      test: [ "CMD-SHELL", "echo stat | nc localhost 2181 | grep Mode" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181  # Critical line
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+
+  order-db:
+    image: mysql:8.0
+    ports: ["3309:3306"]
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: order_db2
+    command: --default-authentication-plugin=mysql_native_password
+
+  inventory-db:
+    image: mysql:8.0
+    ports: ["3320:3306"]
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: inventory_db2
+    command: --default-authentication-plugin=mysql_native_password
+
+  notification-db:
+    image: mysql:8.0
+    ports: ["3311:3306"]
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: notification_db2
+    command: --default-authentication-plugin=mysql_native_password
+
+  order-service:
+    build: ./order-service
+    ports: ["8081:8081"]
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - kafka
+      - order-db
+
+  inventory-service:
+    build: ./inventory-service
+    ports: ["8082:8082"]
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - kafka
+      - inventory-db
+
+  notification-service:
+    build: ./notification-service
+    ports: ["8083:8083"]
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - kafka
+      - notification-db
+
+volumes:
+  order-mysql-data:
+  inventory-mysql-data:
+  notification-mysql-data:
