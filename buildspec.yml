@@ -11,6 +11,8 @@ phases:
     commands:
       - echo "Logging in to Amazon ECR"
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 406234571876.dkr.ecr.us-east-1.amazonaws.com
+      - echo "Logging in to Docker Hub"
+      - echo $DOCKERHUB_PASSWORD | docker login --username $DOCKERHUB_USERNAME --password-stdin
       - REPO_ORDER=406234571876.dkr.ecr.us-east-1.amazonaws.com/order-service
       - REPO_INV=406234571876.dkr.ecr.us-east-1.amazonaws.com/inventory-service
       - REPO_NOTIF=406234571876.dkr.ecr.us-east-1.amazonaws.com/notification-service
