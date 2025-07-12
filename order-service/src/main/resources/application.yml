@@ -5,9 +5,9 @@ spring:
   application:
     name: order-service
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/order_db2?useSSL=false}
-    username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:admin123}
+    url: jdbc:mysql://orderdb.ccxs6t0i4u6p.us-east-1.rds.amazonaws.com:3306/orderdb2?useSSL=false
+    username: root
+    password: admin123v  # ⚠️ replace this with your actual RDS password
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-timeout: 30000
